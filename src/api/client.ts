@@ -1,8 +1,21 @@
 import type { Skill, SkillDetail, SkillSource, PaginatedSkills } from './types';
 
+// In static demo mode (GitLab Pages) requests are served from pre-generated
+// JSON files under /static-api/ instead of a live Express backend.
+const STATIC_MODE = import.meta.env.VITE_STATIC_DEMO === 'true';
 const BASE = '/api/v1';
+const STATIC_BASE = `${import.meta.env.BASE_URL}static-api`;
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  if (STATIC_MODE && (!options || options.method === undefined || options.method === 'GET')) {
+    // Map /skills, /skills/:id, /sources to static JSON files
+    const staticPath = path.replace(/^\/skills\/([^?]+)(\?.*)?$/, '/skills/$1.json')
+                           .replace(/^\/skills(\?.*)?$/, '/skills.json')
+                           .replace(/^\/sources(\?.*)?$/, '/sources.json');
+    const res = await fetch(`${STATIC_BASE}${staticPath}`);
+    if (!res.ok) throw new Error(res.statusText);
+    return res.json() as Promise<T>;
+  }
   const res = await fetch(`${BASE}${path}`, options);
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
@@ -113,6 +126,7 @@ export async function syncSources(
 }
 
 export async function checkHealth(): Promise<boolean> {
+  if (STATIC_MODE) return true;
   try {
     const res = await fetch('/healthz');
     return res.ok;
@@ -120,3 +134,5 @@ export async function checkHealth(): Promise<boolean> {
     return false;
   }
 }
+
+export const isStaticDemo = STATIC_MODE;

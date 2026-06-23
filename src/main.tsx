@@ -5,9 +5,12 @@ import App from './App';
 import '@patternfly/react-core/dist/styles/base.css';
 import './global.css';
 
+// Strip trailing slash so React Router basename works correctly
+const basename = (import.meta.env.BASE_URL || '/').replace(/\/$/, '') || '/';
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <App />
     </BrowserRouter>
   </React.StrictMode>
