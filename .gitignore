@@ -16,3 +16,4 @@ server/sources.json
 
 # Environment
 .env
+server/bundled-skills/
