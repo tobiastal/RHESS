@@ -6,6 +6,8 @@ stages:
 # GitLab Pages requires the job to be named "pages" and artifacts at ./public
 pages:
   stage: build
+  tags:
+    - itup-alm-x86
   script:
     # Install frontend dependencies
     - npm ci
