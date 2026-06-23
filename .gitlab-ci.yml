@@ -25,6 +25,10 @@ pages:
     - rm -rf public
     - mv dist public
 
+    # SPA fix: GitLab Pages serves 404.html for unknown paths.
+    # Copying index.html → 404.html lets React Router handle all routes.
+    - cp public/index.html public/404.html
+
   artifacts:
     paths:
       - public
