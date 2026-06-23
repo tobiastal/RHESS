@@ -12,9 +12,8 @@ pages:
     # Install frontend dependencies
     - npm ci
 
-    # Generate static mock API JSON files into public/static-api/
-    # (Vite will copy public/ into the dist output automatically)
-    - node scripts/generate-static-api.js
+    # static-api/ files are pre-generated locally and committed to the repo.
+    # Vite will copy public/ (including static-api/) into the dist output automatically.
 
     # Build the Vite frontend
     #   VITE_BASE_PATH  → /<project-name>/ so all asset paths are correct
