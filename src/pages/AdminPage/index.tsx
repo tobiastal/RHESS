@@ -417,7 +417,7 @@ const AdminPage: React.FC = () => {
           <FlexItem>
             <Title headingLevel="h1" size="2xl">Admin</Title>
             <Content component="p" style={{ marginTop: 'var(--pf-t--global--spacer--xs)' }}>
-              Register skill sources, browse the full catalog, sync skills from Git, and delete entries. Use bulk selection to act on multiple skills at once.
+              Control your skill catalog from here — register new sources, sync the latest content from Git, and remove what you no longer need.
             </Content>
           </FlexItem>
           <FlexItem>

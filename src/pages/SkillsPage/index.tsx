@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   PageSection,
   PageSectionVariants,
@@ -24,7 +24,6 @@ import {
   Content,
   Flex,
   FlexItem,
-  Divider,
   ToggleGroup,
   ToggleGroupItem,
   Pagination,
@@ -40,14 +39,15 @@ import {
   ThProps,
 } from '@patternfly/react-table';
 import { SearchIcon, CubeIcon, ThIcon, ThListIcon } from '@patternfly/react-icons';
-import { useNavigate } from 'react-router-dom';
-import { getSkills, searchSkills } from '../../api/client';
-import type { GetSkillsParams } from '../../api/client';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { getSkills } from '../../api/client';
+import { useTheme } from '../../hooks/useTheme';
 import type { Skill } from '../../api/types';
 import InstallCommand from '../../components/InstallCommand';
+import { categoryColor } from '../../utils/category';
 
 const SKELETON_COUNT = 9;
-const PER_PAGE_OPTIONS = [12, 24, 48];
+const PER_PAGE_OPTIONS = [10, 20, 50, 100];
 
 type SortCol = 'name' | 'category' | 'lastModified';
 type SortOrder = 'asc' | 'desc';
@@ -56,8 +56,6 @@ interface SortState { col: SortCol; order: SortOrder }
 
 const COLUMN_SORT: Record<number, SortCol> = { 0: 'name' };
 
-import { categoryColor } from '../../utils/category';
-
 const SkillCard: React.FC<{ skill: Skill }> = ({ skill }) => {
   const navigate = useNavigate();
   const sourceUrl = skill.sourceUrl
@@ -65,12 +63,17 @@ const SkillCard: React.FC<{ skill: Skill }> = ({ skill }) => {
     : null;
 
   return (
-    <Card isFullHeight style={{ display: 'flex', flexDirection: 'column' }}>
+    <Card isGlass isFullHeight style={{ display: 'flex', flexDirection: 'column' }}>
       <CardTitle>
         <span style={{ fontWeight: 600 }}>{skill.name}</span>
         {skill.category && (
           <div style={{ marginTop: '0.35rem' }}>
-            <Label color={categoryColor(skill.category)} isCompact>{skill.category}</Label>
+            <Label
+              color={categoryColor(skill.category)}
+              isCompact
+              onClick={(e) => { e.stopPropagation(); navigate(`/skills?category=${encodeURIComponent(skill.category!)}`); }}
+              style={{ cursor: 'pointer' }}
+            >{skill.category}</Label>
           </div>
         )}
         {sourceUrl && (
@@ -153,7 +156,12 @@ const SkillsTable: React.FC<SkillsTableProps> = ({ skills, sort, onSort }) => {
               <strong>{skill.name}</strong>
               {skill.category && (
                 <div style={{ marginTop: '0.25rem' }}>
-                  <Label color={categoryColor(skill.category)} isCompact>{skill.category}</Label>
+                  <Label
+                    color={categoryColor(skill.category)}
+                    isCompact
+                    onClick={(e) => { e.stopPropagation(); navigate(`/skills?category=${encodeURIComponent(skill.category!)}`); }}
+                    style={{ cursor: 'pointer' }}
+                  >{skill.category}</Label>
                 </div>
               )}
             </Td>
@@ -188,45 +196,25 @@ const SkillsTable: React.FC<SkillsTableProps> = ({ skills, sort, onSort }) => {
 type ViewMode = 'card' | 'table';
 
 const SkillsPage: React.FC = () => {
-  const [skills, setSkills] = useState<Skill[]>([]);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const { isDark } = useTheme();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [allSkills, setAllSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [search, setSearch] = useState('');
+  const selectedCategory = searchParams.get('category');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(PER_PAGE_OPTIONS[0]);
   const [sort, setSort] = useState<SortState>({ col: 'name', order: 'asc' });
 
-  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const loadSkills = useCallback(async (
-    q: string,
-    pg: number,
-    pp: number,
-    s: SortState,
-  ) => {
+  const loadSkills = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      if (q.trim()) {
-        const { skills: results, total: t } = await searchSkills(q.trim());
-        setSkills(results);
-        setTotal(t);
-        setTotalPages(1);
-      } else {
-        const data = await getSkills({
-          page: pg,
-          per_page: pp,
-          sort: s.col as GetSkillsParams['sort'],
-          order: s.order,
-        });
-        setSkills(data.skills);
-        setTotal(data.total);
-        setTotalPages(data.total_pages);
-      }
+      const data = await getSkills({ per_page: 200 });
+      setAllSkills(data.skills);
     } catch (err: unknown) {
       setError((err as Error).message);
     } finally {
@@ -234,84 +222,116 @@ const SkillsPage: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => {
-    loadSkills('', page, perPage, sort);
-  }, []); // eslint-disable-line
+  useEffect(() => { loadSkills(); }, []); // eslint-disable-line
 
-  useEffect(() => {
-    if (searchTimeout.current) clearTimeout(searchTimeout.current);
-    searchTimeout.current = setTimeout(() => {
-      setPage(1);
-      loadSkills(search, 1, perPage, sort);
-    }, 300);
-    return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current); };
-  }, [search]); // eslint-disable-line
+  // Derive unique categories from the full catalog
+  const categories = [...new Set(allSkills.map((s) => s.category).filter(Boolean) as string[])].sort();
 
-  const handlePageChange = (_e: React.MouseEvent | React.KeyboardEvent | MouseEvent, newPage: number) => {
-    setPage(newPage);
-    loadSkills(search, newPage, perPage, sort);
-  };
+  // Client-side filter + sort
+  const filteredSkills = allSkills
+    .filter((s) => {
+      const q = search.toLowerCase();
+      const matchesSearch = !q ||
+        s.name.toLowerCase().includes(q) ||
+        (s.description ?? '').toLowerCase().includes(q) ||
+        (s.category ?? '').toLowerCase().includes(q);
+      const matchesCategory = !selectedCategory || s.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      const cmp = a.name.localeCompare(b.name);
+      return sort.order === 'asc' ? cmp : -cmp;
+    });
 
-  const handlePerPageChange = (_e: React.MouseEvent | React.KeyboardEvent | MouseEvent, newPerPage: number) => {
-    setPerPage(newPerPage);
+  const totalFiltered = filteredSkills.length;
+  const totalPages = Math.ceil(totalFiltered / perPage);
+  const pageSkills = filteredSkills.slice((page - 1) * perPage, page * perPage);
+
+  const handleSearch = (val: string) => { setSearch(val); setPage(1); };
+  const handleCategory = (cat: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (next.get('category') === cat) next.delete('category');
+      else next.set('category', cat);
+      return next;
+    });
     setPage(1);
-    loadSkills(search, 1, newPerPage, sort);
   };
-
-  const handleSort = (col: SortCol, order: SortOrder) => {
-    const next = { col, order };
-    setSort(next);
-    setPage(1);
-    loadSkills(search, 1, perPage, next);
-  };
+  const handleSort = (col: SortCol, order: SortOrder) => { setSort({ col, order }); setPage(1); };
 
   return (
     <>
-      <PageSection variant={PageSectionVariants.secondary} isWidthLimited>
-        <Flex alignItems={{ default: 'alignItemsCenter' }} justifyContent={{ default: 'justifyContentSpaceBetween' }}>
-          <FlexItem>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Title headingLevel="h1" size="2xl" style={{ lineHeight: 1 }}>Skills</Title>
-              {!loading && <Badge isRead>{total}</Badge>}
+      {/* ── Hero search section ── */}
+      <PageSection
+        style={{
+          paddingBlockStart: 'var(--pf-t--global--spacer--lg)',
+          paddingBlockEnd: 'var(--pf-t--global--spacer--2xl)',
+          paddingInline: 'var(--pf-t--global--spacer--lg)',
+        }}
+      >
+        {/* View toggle — flows to top-right, never overlaps card */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+          <ToggleGroup aria-label="View mode">
+            <ToggleGroupItem icon={<ThListIcon />} aria-label="Table view" isSelected={viewMode === 'table'} onChange={() => setViewMode('table')} />
+            <ToggleGroupItem icon={<ThIcon />} aria-label="Card view" isSelected={viewMode === 'card'} onChange={() => setViewMode('card')} />
+          </ToggleGroup>
+        </div>
+        <Card isGlass style={{ maxWidth: '680px', margin: '0 auto', overflow: 'hidden' }}>
+          <CardBody style={{ textAlign: 'center', padding: 'var(--pf-t--global--spacer--xl)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: 'var(--pf-t--global--spacer--xs)' }}>
+              <Title headingLevel="h1" size="2xl">Skills</Title>
+              {!loading && <Badge isRead>{totalFiltered}</Badge>}
             </div>
-            <Content component="p" style={{ marginTop: 'var(--pf-t--global--spacer--xs)' }}>
+            <Content component="p" style={{ color: 'var(--pf-t--global--text--color--subtle)', marginBottom: 'var(--pf-t--global--spacer--xl)' }}>
               Add reusable procedural knowledge to your AI agents with a single-command skill installation.
             </Content>
-          </FlexItem>
-        </Flex>
+
+            <SearchInput
+              placeholder="Search skills…"
+              value={search}
+              onChange={(_e, val) => handleSearch(val)}
+              onClear={() => handleSearch('')}
+              aria-label="Search skills"
+              style={{ width: '100%', fontSize: '1rem' }}
+            />
+
+            {categories.length > 0 && (
+              <div style={{ marginTop: 'var(--pf-t--global--spacer--lg)', display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
+                {categories.map((cat) => (
+                  <Label
+                    key={cat}
+                    color={categoryColor(cat)}
+                    isCompact
+                    onClick={() => handleCategory(cat)}
+                    style={{
+                      cursor: 'pointer',
+                      opacity: selectedCategory && selectedCategory !== cat ? 0.45 : 1,
+                      outline: selectedCategory === cat ? '2px solid var(--pf-t--global--border--color--status--info--default)' : undefined,
+                      outlineOffset: '2px',
+                      transition: 'opacity 0.15s',
+                    }}
+                  >
+                    {cat}
+                  </Label>
+                ))}
+              </div>
+            )}
+
+          </CardBody>
+        </Card>
       </PageSection>
 
-      <PageSection variant={PageSectionVariants.secondary} padding={{ default: 'noPadding' }}>
-        <Divider />
-      </PageSection>
-
-      <PageSection variant={PageSectionVariants.default}>
-        <Toolbar>
-          <ToolbarContent>
-            <ToolbarItem>
-              <SearchInput
-                placeholder="Search skills…"
-                value={search}
-                onChange={(_e, val) => setSearch(val)}
-                onClear={() => setSearch('')}
-                aria-label="Search skills"
-                style={{ width: '320px' }}
-              />
-            </ToolbarItem>
-            <ToolbarItem align={{ default: 'alignEnd' }}>
-              <ToggleGroup aria-label="View mode">
-                <ToggleGroupItem icon={<ThListIcon />} aria-label="Table view" isSelected={viewMode === 'table'} onClick={() => setViewMode('table')} />
-                <ToggleGroupItem icon={<ThIcon />} aria-label="Card view" isSelected={viewMode === 'card'} onClick={() => setViewMode('card')} />
-              </ToggleGroup>
-            </ToolbarItem>
-          </ToolbarContent>
-        </Toolbar>
+      {/* ── Table / Gallery section ── */}
+      <PageSection
+        variant={PageSectionVariants.default}
+        style={{ paddingBlockStart: 0, paddingBlockEnd: 'var(--pf-t--global--spacer--md)', paddingInline: 'var(--pf-t--global--spacer--lg)' }}
+      >
 
         {loading && (
           <Gallery hasGutter minWidths={{ default: '280px', md: '300px' }}>
             {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
               <GalleryItem key={i}>
-                <Card isFullHeight>
+                <Card isGlass isFullHeight>
                   <CardTitle><Skeleton width="60%" height="1.2rem" /></CardTitle>
                   <CardBody>
                     <Skeleton width="100%" height="0.9rem" style={{ marginBottom: '0.5rem' }} />
@@ -330,46 +350,50 @@ const SkillsPage: React.FC = () => {
             <EmptyStateBody>{error} — make sure the RHESS server is running on port 3001.</EmptyStateBody>
             <EmptyStateFooter>
               <EmptyStateActions>
-                <Button variant="primary" onClick={() => loadSkills(search, page, perPage, sort)}>Retry</Button>
+                <Button variant="primary" onClick={loadSkills}>Retry</Button>
               </EmptyStateActions>
             </EmptyStateFooter>
           </EmptyState>
         )}
 
-        {!loading && !error && skills.length === 0 && (
-          <EmptyState headingLevel="h2" titleText={search ? 'No skills match your search' : 'No skills found'} icon={CubeIcon}>
+        {!loading && !error && filteredSkills.length === 0 && (
+          <EmptyState headingLevel="h2" titleText={search || selectedCategory ? 'No skills match your filters' : 'No skills found'} icon={CubeIcon}>
             <EmptyStateBody>
-              {search ? `No skills matched "${search}". Try a different search term.` : 'Add skill sources in the Admin section to get started.'}
+              {search || selectedCategory
+                ? 'Try adjusting your search or clearing a category filter.'
+                : 'Add skill sources in the Admin section to get started.'}
             </EmptyStateBody>
-            {search && (
+            {(search || selectedCategory) && (
               <EmptyStateFooter>
                 <EmptyStateActions>
-                  <Button variant="link" onClick={() => setSearch('')}>Clear search</Button>
+                  <Button variant="link" onClick={() => { handleSearch(''); setSearchParams({}); }}>Clear filters</Button>
                 </EmptyStateActions>
               </EmptyStateFooter>
             )}
           </EmptyState>
         )}
 
-        {!loading && !error && skills.length > 0 && viewMode === 'card' && (
+        {!loading && !error && filteredSkills.length > 0 && viewMode === 'card' && (
           <Gallery hasGutter minWidths={{ default: '280px', md: '300px' }}>
-            {skills.map((skill) => (
+            {pageSkills.map((skill) => (
               <GalleryItem key={skill.id}><SkillCard skill={skill} /></GalleryItem>
             ))}
           </Gallery>
         )}
 
-        {!loading && !error && skills.length > 0 && viewMode === 'table' && (
-          <SkillsTable skills={skills} sort={sort} onSort={handleSort} />
+        {!loading && !error && filteredSkills.length > 0 && viewMode === 'table' && (
+          <Card>
+            <SkillsTable skills={pageSkills} sort={sort} onSort={handleSort} />
+          </Card>
         )}
 
-        {!loading && !error && !search && totalPages > 1 && (
+        {!loading && !error && totalFiltered > 0 && (
           <Pagination
-            itemCount={total}
+            itemCount={totalFiltered}
             perPage={perPage}
             page={page}
-            onSetPage={handlePageChange}
-            onPerPageSelect={handlePerPageChange}
+            onSetPage={(_e, p) => setPage(p)}
+            onPerPageSelect={(_e, pp) => { setPerPage(pp); setPage(1); }}
             perPageOptions={PER_PAGE_OPTIONS.map((n) => ({ title: `${n}`, value: n }))}
             style={{ marginTop: 'var(--pf-t--global--spacer--lg)' }}
           />

@@ -29,6 +29,7 @@ import {
 } from '@patternfly/react-core';
 import { ArrowLeftIcon, ExclamationCircleIcon, FolderOpenIcon, FileIcon, TagIcon } from '@patternfly/react-icons';
 import { useNavigate, useParams } from 'react-router-dom';
+import { categoryColor } from '../../utils/category';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { getSkill } from '../../api/client';
@@ -42,6 +43,7 @@ const MarkdownSection: React.FC<{ content: string }> = ({ content }) => (
 );
 
 const MetadataCard: React.FC<{ skill: SkillDetail }> = ({ skill }) => {
+  const navigate = useNavigate();
   const sourceUrl = skill.sourceUrl
     ? (skill.sourceUrl.startsWith('http') ? skill.sourceUrl : `https://github.com/${skill.sourceUrl}`)
     : null;
@@ -51,7 +53,7 @@ const MetadataCard: React.FC<{ skill: SkillDetail }> = ({ skill }) => {
   );
 
   return (
-    <Card isFullHeight>
+    <Card isGlass isFullHeight>
       <CardTitle>Details</CardTitle>
       <CardBody>
         <DescriptionList isCompact>
@@ -70,7 +72,12 @@ const MetadataCard: React.FC<{ skill: SkillDetail }> = ({ skill }) => {
             <DescriptionListGroup>
               <DescriptionListTerm>Category</DescriptionListTerm>
               <DescriptionListDescription>
-                <Label color="blue" isCompact>{skill.frontmatter.category}</Label>
+                <Label
+                  color={categoryColor(skill.frontmatter.category)}
+                  isCompact
+                  onClick={() => navigate(`/skills?category=${encodeURIComponent(skill.frontmatter.category as string)}`)}
+                  style={{ cursor: 'pointer' }}
+                >{skill.frontmatter.category}</Label>
               </DescriptionListDescription>
             </DescriptionListGroup>
           )}
@@ -131,7 +138,7 @@ const FileTreeCard: React.FC<{ files: SkillFile[] }> = ({ files }) => {
   );
   if (!files.length) return null;
   return (
-    <Card>
+    <Card isGlass>
       <CardTitle>
         <Flex alignItems={{ default: 'alignItemsCenter' }} gap={{ default: 'gapSm' }}>
           <FlexItem><FolderOpenIcon /></FlexItem>
@@ -180,7 +187,7 @@ const FileTreeCard: React.FC<{ files: SkillFile[] }> = ({ files }) => {
 };
 
 const InstallCard: React.FC<{ command: string }> = ({ command }) => (
-  <Card>
+  <Card isGlass>
     <CardTitle>Install</CardTitle>
     <CardBody>
       <Content component="p" style={{ marginBottom: 'var(--pf-t--global--spacer--sm)' }}>
@@ -201,7 +208,7 @@ const DetailSkeleton: React.FC = () => (
     <PageSection>
       <Grid hasGutter>
         <GridItem md={8}>
-          <Card>
+          <Card isGlass>
             <CardBody>
               {Array.from({ length: 10 }).map((_, i) => (
                 <Skeleton
@@ -215,7 +222,7 @@ const DetailSkeleton: React.FC = () => (
           </Card>
         </GridItem>
         <GridItem md={4}>
-          <Card>
+          <Card isGlass>
             <CardTitle>
               <Skeleton width="40%" height="1.2rem" />
             </CardTitle>
@@ -317,7 +324,7 @@ const SkillDetailPage: React.FC = () => {
       <PageSection>
         <Grid hasGutter>
           <GridItem md={8}>
-            <Card isFullHeight>
+            <Card isGlass isFullHeight>
               <CardTitle>SKILL.md</CardTitle>
               <CardBody>
                 {skill.content ? (

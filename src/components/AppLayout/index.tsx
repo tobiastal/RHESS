@@ -53,7 +53,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           style={{ width: '100%' }}
         >
           <FlexItem>
-            <Tooltip content={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>
+            <Tooltip position="bottom" content={isDark ? 'Switch to light mode' : 'Switch to dark mode'}>
               <button
                 onClick={toggleTheme}
                 aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
