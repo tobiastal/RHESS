@@ -58,9 +58,6 @@ const COLUMN_SORT: Record<number, SortCol> = { 0: 'name' };
 
 const SkillCard: React.FC<{ skill: Skill }> = ({ skill }) => {
   const navigate = useNavigate();
-  const sourceUrl = skill.sourceUrl
-    ? (skill.sourceUrl.startsWith('http') ? skill.sourceUrl : `https://github.com/${skill.sourceUrl}`)
-    : null;
 
   return (
     <Card isGlass isFullHeight style={{ display: 'flex', flexDirection: 'column' }}>
@@ -74,19 +71,6 @@ const SkillCard: React.FC<{ skill: Skill }> = ({ skill }) => {
               onClick={(e) => { e.stopPropagation(); navigate(`/skills?category=${encodeURIComponent(skill.category!)}`); }}
               style={{ cursor: 'pointer' }}
             >{skill.category}</Label>
-          </div>
-        )}
-        {sourceUrl && (
-          <div style={{ marginTop: '0.2rem' }}>
-            <a
-              href={sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              style={{ fontSize: '0.75em', color: 'var(--pf-t--global--color--nonstatus--blue--default)' }}
-            >
-              {skill.sourceUrl}
-            </a>
           </div>
         )}
       </CardTitle>
