@@ -177,7 +177,7 @@ function scanDirectory(baseDir, sourceId, sourceLabel) {
         frontmatter,
         installCommand: typeof frontmatter.source === 'string'
           ? `cursor install ${frontmatter.source} --skill ${entry.name}`
-          : `cp -r "${skillDir}" "$HOME/.cursor/skills/"`,
+          : `cursor install ${sourceId}/${entry.name}`,
         lastModified: stat.mtime.toISOString(),
       });
     } catch {
@@ -263,7 +263,7 @@ function getSkillById(id) {
         content,
         installCommand: typeof frontmatter.source === 'string'
           ? `cursor install ${frontmatter.source} --skill ${slug}`
-          : `cp -r "${skillDir}" "$HOME/.cursor/skills/"`,
+          : `cursor install ${sourceId}/${slug}`,
         lastModified: stat.mtime.toISOString(),
       };
     } catch {
