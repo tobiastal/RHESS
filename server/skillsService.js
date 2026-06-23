@@ -65,7 +65,7 @@ const DEFAULT_SOURCES = [
     label: 'Community Skills',
     url: null,
     path: path.join(__dirname, 'mock-skills'),
-    lastSynced: null,
+    lastSynced: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2h ago
     status: 'ready',
   },
   {
@@ -73,7 +73,7 @@ const DEFAULT_SOURCES = [
     label: 'Cursor Built-in Skills',
     url: null,
     path: path.join(os.homedir(), '.cursor', 'skills-cursor'),
-    lastSynced: null,
+    lastSynced: new Date(Date.now() - 30 * 60 * 1000).toISOString(), // 30m ago
     status: 'ready',
   },
   {
@@ -81,7 +81,7 @@ const DEFAULT_SOURCES = [
     label: 'User Skills',
     url: null,
     path: path.join(os.homedir(), '.cursor', 'skills'),
-    lastSynced: null,
+    lastSynced: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5m ago
     status: 'ready',
   },
 ];

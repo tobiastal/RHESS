@@ -51,9 +51,9 @@ function inferCategory(slug, fm) {
 }
 
 const SOURCES = [
-  { id: 'mock-skills',          label: 'Community Skills',      dir: path.join(ROOT, 'server', 'mock-skills') },
-  { id: 'cursor-skills-cursor', label: 'Cursor Built-in Skills', dir: path.join(os.homedir(), '.cursor', 'skills-cursor') },
-  { id: 'cursor-skills',        label: 'User Skills',            dir: path.join(os.homedir(), '.cursor', 'skills') },
+  { id: 'mock-skills',          label: 'Community Skills',       dir: path.join(ROOT, 'server', 'mock-skills'),                         lastSynced: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() },
+  { id: 'cursor-skills-cursor', label: 'Cursor Built-in Skills',  dir: path.join(os.homedir(), '.cursor', 'skills-cursor'),              lastSynced: new Date(Date.now() - 30 * 60 * 1000).toISOString() },
+  { id: 'cursor-skills',        label: 'User Skills',             dir: path.join(os.homedir(), '.cursor', 'skills'),                     lastSynced: new Date(Date.now() - 5 * 60 * 1000).toISOString() },
 ];
 
 const skills = [];
@@ -120,7 +120,7 @@ fs.writeFileSync(
   JSON.stringify({
     sources: SOURCES
       .filter(s => fs.existsSync(s.dir))
-      .map(s => ({ id: s.id, label: s.label, url: null, path: s.dir, lastSynced: null, status: 'ready' }))
+      .map(s => ({ id: s.id, label: s.label, url: null, path: null, lastSynced: s.lastSynced, status: 'ready' }))
   })
 );
 
