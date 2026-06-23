@@ -19,7 +19,7 @@ pages:
     # Build the Vite frontend
     #   VITE_BASE_PATH  → /<project-name>/ so all asset paths are correct
     #   VITE_STATIC_DEMO → switches API client to use static JSON files
-    - VITE_BASE_PATH="/$CI_PROJECT_NAME/" VITE_STATIC_DEMO=true npm run build
+    - VITE_BASE_PATH="/" VITE_STATIC_DEMO=true npm run build
 
     # Move Vite's dist/ output to public/ (GitLab Pages requirement)
     # The original public/ source folder was already copied into dist/ by Vite
