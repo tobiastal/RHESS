@@ -7,6 +7,45 @@ const simpleGit = require('simple-git');
 const CONFIG_FILE = path.join(__dirname, 'sources.json');
 const REPOS_DIR = path.join(__dirname, 'repos');
 
+// Fallback category inference when a skill's frontmatter has no `category` field.
+// Matches on skill name and slug so Cursor-managed files (which reset on update)
+// still get a category without requiring edits to the source files.
+const CATEGORY_OVERRIDES = {
+  automate:               'Cursor Tooling',
+  babysit:                'Code Review',
+  canvas:                 'Cursor Tooling',
+  'create-hook':          'Cursor Tooling',
+  'create-rule':          'Cursor Tooling',
+  'create-skill':         'Cursor Tooling',
+  'create-subagent':      'Cursor Tooling',
+  loop:                   'Utilities',
+  'migrate-to-skills':    'Cursor Tooling',
+  review:                 'Code Review',
+  'review-bugbot':        'Code Review',
+  'review-security':      'Code Review',
+  sdk:                    'Development',
+  shell:                  'Utilities',
+  'split-to-prs':         'Code Review',
+  statusline:             'Cursor Tooling',
+  'update-cli-config':    'Cursor Tooling',
+  'update-cursor-settings': 'Cursor Tooling',
+  'rhdh-ux-designer':     'Design & UI',
+};
+
+function inferCategory(slug, name, frontmatterCategory) {
+  if (typeof frontmatterCategory === 'string' && frontmatterCategory.trim()) {
+    return frontmatterCategory.trim();
+  }
+  if (CATEGORY_OVERRIDES[slug]) return CATEGORY_OVERRIDES[slug];
+  const n = (name || slug || '').toLowerCase();
+  if (n.includes('review') || n.includes('babysit') || n.includes('split'))  return 'Code Review';
+  if (n.includes('canvas') || n.includes('rule') || n.includes('hook') ||
+      n.includes('skill') || n.includes('cursor') || n.includes('status'))   return 'Cursor Tooling';
+  if (n.includes('sdk') || n.includes('api') || n.includes('dev'))           return 'Development';
+  if (n.includes('shell') || n.includes('loop') || n.includes('util'))       return 'Utilities';
+  return null;
+}
+
 // Agent Skills spec discovery directories (per agentskills.io)
 const DISCOVERY_PATHS = [
   '',                   // repo root
@@ -126,7 +165,7 @@ function scanDirectory(baseDir, sourceId, sourceLabel) {
         slug: entry.name,
         name: String(frontmatter.name),
         description: String(frontmatter.description).trim(),
-        category: typeof frontmatter.category === 'string' ? frontmatter.category.trim() : null,
+        category: inferCategory(entry.name, frontmatter.name, frontmatter.category),
         allowedTools: Array.isArray(frontmatter['allowed-tools'])
           ? frontmatter['allowed-tools']
           : typeof frontmatter['allowed-tools'] === 'string'
@@ -210,7 +249,7 @@ function getSkillById(id) {
         slug,
         name: String(frontmatter.name),
         description: String(frontmatter.description).trim(),
-        category: typeof frontmatter.category === 'string' ? frontmatter.category.trim() : null,
+        category: inferCategory(slug, frontmatter.name, frontmatter.category),
         allowedTools: Array.isArray(frontmatter['allowed-tools'])
           ? frontmatter['allowed-tools']
           : typeof frontmatter['allowed-tools'] === 'string'

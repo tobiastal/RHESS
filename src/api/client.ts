@@ -79,6 +79,16 @@ export async function syncSource(
   });
 }
 
+export async function syncSkill(
+  token: string,
+  skillId: string
+): Promise<{ synced: boolean; skillId: string; lastSynced: string }> {
+  return request(`/skills/${encodeURIComponent(skillId)}/sync`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
 export async function deleteSource(token: string, id: string): Promise<{ ok: boolean; skillsRemoved: number }> {
   return request(`/sources/${id}`, {
     method: 'DELETE',

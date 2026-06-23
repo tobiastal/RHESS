@@ -38,6 +38,7 @@ import {
   DropdownItem,
   MenuToggle,
   MenuToggleCheckbox,
+  Card,
 } from '@patternfly/react-core';
 import {
   Table,
@@ -61,6 +62,7 @@ import {
   addSource,
   updateSource,
   syncSource,
+  syncSkill,
   deleteSkill,
   getSources,
   deleteSource,
@@ -137,6 +139,7 @@ const AdminPage: React.FC = () => {
 
   // Edit source modal (per skill row)
   const [editTarget, setEditTarget] = useState<SkillSource | null>(null);
+  const [editSkillName, setEditSkillName] = useState('');
   const [editLabel, setEditLabel] = useState('');
   const [editPath, setEditPath] = useState('');
   const [editSaving, setEditSaving] = useState(false);
@@ -231,12 +234,10 @@ const AdminPage: React.FC = () => {
   }, [search]); // eslint-disable-line
 
   const handleRowSync = async (skill: Skill) => {
-    const source = sources.find((s) => s.id === skill.sourceId);
-    if (!source) return;
-    setSyncingId(skill.sourceId);
+    setSyncingId(skill.id);
     try {
-      await syncSource(token, source.id);
-      addToast('success', `Synced "${source.label}"`);
+      await syncSkill(token, skill.id);
+      addToast('success', `Synced "${skill.name}"`);
       loadData(search);
     } catch (err: unknown) {
       addToast('danger', 'Sync failed', (err as Error).message);
@@ -249,7 +250,8 @@ const AdminPage: React.FC = () => {
     const source = sources.find((s) => s.id === skill.sourceId);
     if (!source) return;
     setEditTarget(source);
-    setEditLabel(source.label);
+    setEditSkillName(skill.name);
+    setEditLabel(skill.name);
     setEditPath(source.path);
   };
 
@@ -453,7 +455,7 @@ const AdminPage: React.FC = () => {
       {/* Skills management table */}
       {isAuthenticated && (
         <PageSection variant={PageSectionVariants.default}>
-          <Toolbar>
+          <Toolbar style={{ paddingBlockEnd: 0 }}>
             <ToolbarContent>
               {/* PF bulk selector: split button (checkbox + dropdown) */}
               <ToolbarItem>
@@ -550,6 +552,7 @@ const AdminPage: React.FC = () => {
             </ToolbarContent>
           </Toolbar>
 
+          <Card style={{ marginBlock: 'var(--pf-t--global--spacer--md)' }}>
           {loading ? (
             <Table aria-label="Loading skills">
               <Thead>
@@ -675,7 +678,7 @@ const AdminPage: React.FC = () => {
                               <Button variant="plain" aria-label={`Sync ${skill.name}`} onClick={() => handleRowSync(skill)}
                                 isDisabled={syncingId === skill.sourceId}
                                 style={{ color: 'var(--pf-t--global--icon--color--subtle)' }}>
-                                <SyncAltIcon style={{ animation: syncingId === skill.sourceId ? 'spin 1s linear infinite' : undefined }} />
+                                <SyncAltIcon style={{ animation: syncingId === skill.id ? 'spin 1s linear infinite' : undefined }} />
                               </Button>
                             </Tooltip>
                           </FlexItem>
@@ -695,11 +698,12 @@ const AdminPage: React.FC = () => {
               </Tbody>
             </Table>
           )}
+          </Card>
 
           {/* Pagination footer */}
-          {!loading && skills.length > perPage && (
+          {!loading && sortedSkills.length > 0 && (
             <Pagination
-              itemCount={skills.length}
+              itemCount={sortedSkills.length}
               page={page}
               perPage={perPage}
               onSetPage={(_e, p) => { setPage(p); setSelected(new Set()); }}
@@ -787,7 +791,7 @@ const AdminPage: React.FC = () => {
 
       {/* Edit source modal */}
       <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} variant="medium">
-        <ModalHeader title={`Edit source — "${editTarget?.label}"`} />
+        <ModalHeader title={`Edit source — "${editSkillName}"`} />
         <ModalBody>
           <Form>
             <FormGroup label="Name" isRequired fieldId="edit-label">

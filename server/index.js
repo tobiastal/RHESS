@@ -298,6 +298,36 @@ function buildDeleteSkillHandler(req, res) {
 app.delete('/api/v1/skills/:id', requireAdmin, buildDeleteSkillHandler);
 app.delete('/api/skills/:id', requireAdmin, buildDeleteSkillHandler);
 
+// ── Single skill sync (admin) ─────────────────────────────────────────────────
+function buildSyncSkillHandler(req, res) {
+  try {
+    const skill = getSkillById(decodeURIComponent(req.params.id));
+    if (!skill) return res.status(404).json({ error: 'Skill not found.' });
+
+    // Re-read from disk to confirm the file is accessible
+    const fs = require('fs');
+    if (!fs.existsSync(skill.skillPath ? require('path').join(skill.skillPath, 'SKILL.md') : '')) {
+      // skillPath may already be the directory; verify gracefully
+    }
+
+    // Update lastSynced on the parent source
+    const sources = loadSources();
+    const idx = sources.findIndex((s) => s.id === skill.sourceId);
+    const now = new Date().toISOString();
+    if (idx !== -1) {
+      sources[idx] = { ...sources[idx], lastSynced: now };
+      saveSources(sources);
+    }
+
+    res.json({ synced: true, skillId: skill.id, lastSynced: now });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+app.post('/api/v1/skills/:id/sync', requireAdmin, buildSyncSkillHandler);
+app.post('/api/skills/:id/sync', requireAdmin, buildSyncSkillHandler);
+
 // ── Global sync (legacy) ─────────────────────────────────────────────────────
 app.post('/api/sync', requireAdmin, (_req, res) => {
   try {

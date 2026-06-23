@@ -12,7 +12,7 @@ import {
   FlexItem,
   Tooltip,
 } from '@patternfly/react-core';
-import { OutlinedMoonIcon, RhUiLightModeIcon, CubeIcon, LockIcon, ArrowLeftIcon } from '@patternfly/react-icons';
+import { OutlinedMoonIcon, RhUiLightModeIcon, LockIcon, ArrowLeftIcon } from '@patternfly/react-icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
 
@@ -33,16 +33,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     <Masthead>
       <MastheadMain>
         <MastheadBrand onClick={() => navigate('/skills')} style={{ cursor: 'pointer' }}>
-          <Flex alignItems={{ default: 'alignItemsCenter' }} gap={{ default: 'gapSm' }}>
-            <FlexItem>
-              <CubeIcon style={{ color: 'var(--pf-t--global--color--brand--default)' }} />
-            </FlexItem>
-            <FlexItem>
-              <Content component="p" style={{ fontWeight: 700, fontSize: '1.1rem', color: 'inherit', margin: 0 }}>
-                Red Hat Enterprise Skills Server
-              </Content>
-            </FlexItem>
-          </Flex>
+          <img
+            src={isDark ? '/logo-dark.png' : '/logo-light.png'}
+            alt="Red Hat Enterprise Skills Server"
+            style={{ height: '32px', width: 'auto' }}
+          />
         </MastheadBrand>
       </MastheadMain>
       <MastheadContent>
