@@ -80,7 +80,7 @@ for (const source of SOURCES) {
         category: inferCategory(slug, fm),
         sourceId: source.id,
         sourceLabel: source.label,
-        installCommand: fm.source ? `cursor install ${fm.source} --skill ${slug}` : `cursor install ${source.id}/${slug}`,
+        installCommand: fm.source ? `install ${fm.source} --skill ${slug}` : `install ${source.id}/${slug}`,
         lastModified: fs.statSync(skillFile).mtime.toISOString(),
         allowedTools: Array.isArray(fm['allowed-tools']) ? fm['allowed-tools'] : [],
         sourceUrl: fm.source || null,

@@ -188,7 +188,7 @@ const FileTreeCard: React.FC<{ files: SkillFile[] }> = ({ files }) => {
 
 const InstallCard: React.FC<{ command: string }> = ({ command }) => (
   <Card isGlass>
-    <CardTitle>Install</CardTitle>
+    <CardTitle>Install command</CardTitle>
     <CardBody>
       <Content component="p" style={{ marginBottom: 'var(--pf-t--global--spacer--sm)' }}>
         Copy this skill to your directory:

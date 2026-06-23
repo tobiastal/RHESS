@@ -145,7 +145,7 @@ const SkillsTable: React.FC<SkillsTableProps> = ({ skills, sort, onSort }) => {
         <Tr>
           <Th sort={getSortParams(0)} style={{ width: '22%' }}>Name</Th>
           <Th style={{ width: '36%' }}>Description</Th>
-          <Th style={{ width: '30%' }}>Install</Th>
+          <Th style={{ width: '30%' }}>Install command</Th>
           <Th style={{ width: '12%' }}>Actions</Th>
         </Tr>
       </Thead>
@@ -178,7 +178,7 @@ const SkillsTable: React.FC<SkillsTableProps> = ({ skills, sort, onSort }) => {
                 </Content>
               )}
             </Td>
-            <Td dataLabel="Install" style={{ verticalAlign: 'middle', paddingInlineEnd: 'var(--pf-t--global--spacer--lg)' }}>
+            <Td dataLabel="Install command" style={{ verticalAlign: 'middle', paddingInlineEnd: 'var(--pf-t--global--spacer--lg)' }}>
               <InstallCommand command={skill.installCommand} compact />
             </Td>
             <Td dataLabel="Actions" style={{ verticalAlign: 'middle' }}>

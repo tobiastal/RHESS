@@ -559,7 +559,7 @@ const AdminPage: React.FC = () => {
                 <Tr>
                   <Th>Name</Th>
                   <Th>Description</Th>
-                  <Th>Install</Th>
+                  <Th>Install command</Th>
                   <Th>Actions</Th>
                 </Tr>
               </Thead>
@@ -603,7 +603,7 @@ const AdminPage: React.FC = () => {
                     Name
                   </Th>
                   <Th style={{ width: '28%' }}>Description</Th>
-                  <Th style={{ width: '26%' }}>Install</Th>
+                  <Th style={{ width: '26%' }}>Install command</Th>
                   <Th
                     style={{ width: '14%' }}
                     sort={{ sortBy: { index: 3, direction: sortCol === 'lastSynced' ? sortDir : undefined }, onSort: () => handleSort('lastSynced'), columnIndex: 3 }}
@@ -647,7 +647,7 @@ const AdminPage: React.FC = () => {
                           </Content>
                         )}
                       </Td>
-                      <Td dataLabel="Install" style={{ verticalAlign: 'middle', paddingInlineEnd: 'var(--pf-t--global--spacer--lg)' }}>
+                      <Td dataLabel="Install command" style={{ verticalAlign: 'middle', paddingInlineEnd: 'var(--pf-t--global--spacer--lg)' }}>
                         {skill.installCommand && <InstallCommand command={skill.installCommand} compact />}
                       </Td>
                       <Td dataLabel="Last sync" style={{ verticalAlign: 'middle' }}>
