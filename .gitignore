@@ -5,4 +5,14 @@
 .git/
 
 # macOS
-.DS_Store 
+.DS_Store
+
+# Node
+node_modules/
+dist/
+
+# Local config (contains machine-specific paths)
+server/sources.json
+
+# Environment
+.env
