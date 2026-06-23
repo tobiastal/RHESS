@@ -83,7 +83,7 @@ for (const source of SOURCES) {
         installCommand: fm.source ? `install ${fm.source} --skill ${slug}` : `install ${source.id}/${slug}`,
         lastModified: fs.statSync(skillFile).mtime.toISOString(),
         allowedTools: Array.isArray(fm['allowed-tools']) ? fm['allowed-tools'] : [],
-        sourceUrl: null,
+        sourceUrl: fm.source || null,
         frontmatter: fm,
         content,
         files: [],
