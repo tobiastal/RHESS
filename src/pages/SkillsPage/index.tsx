@@ -311,7 +311,32 @@ const SkillsPage: React.FC = () => {
         style={{ paddingBlockStart: 0, paddingBlockEnd: 'var(--pf-t--global--spacer--md)', paddingInline: 'var(--pf-t--global--spacer--lg)' }}
       >
 
-        {loading && (
+        {loading && viewMode === 'table' && (
+          <Card>
+            <Table aria-label="Loading skills" isStriped style={{ tableLayout: 'fixed', width: '100%' }}>
+              <Thead>
+                <Tr>
+                  <Th style={{ width: '22%' }}>Name</Th>
+                  <Th style={{ width: '36%' }}>Description</Th>
+                  <Th style={{ width: '30%' }}>Install command</Th>
+                  <Th style={{ width: '12%' }}>Actions</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+                  <Tr key={i}>
+                    <Td><Skeleton width="70%" /><Skeleton width="40%" height="1.2rem" style={{ marginTop: '0.35rem' }} /></Td>
+                    <Td><Skeleton width="90%" /><Skeleton width="65%" style={{ marginTop: '0.4rem' }} /></Td>
+                    <Td><Skeleton width="85%" height="1.8rem" /></Td>
+                    <Td><Skeleton width="60px" /></Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </Card>
+        )}
+
+        {loading && viewMode === 'card' && (
           <Gallery hasGutter minWidths={{ default: '280px', md: '300px' }}>
             {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
               <GalleryItem key={i}>
